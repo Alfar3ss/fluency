@@ -3,6 +3,9 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
+// Force dynamic rendering - prevent static generation at build time
+export const dynamic = 'force-dynamic';
+
 const PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789";
 
 function generatePassword(length = 8) {
