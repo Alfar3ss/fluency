@@ -2,12 +2,14 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { supabase } from "../lib/supabase"
+import { getSupabaseClient } from "../lib/supabase"
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
+    const supabase = getSupabaseClient()
+    
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
     })
