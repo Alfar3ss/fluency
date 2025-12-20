@@ -5,12 +5,6 @@ import { createClient } from "@supabase/supabase-js";
 
 const PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789";
 
-// Create supabase client outside component to prevent recreation
-const supabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-);
-
 function generatePassword(length = 8) {
   let out = "";
   for (let i = 0; i < length; i += 1) {
@@ -25,7 +19,11 @@ function barWidth(count: number, max: number) {
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const supabase = supabaseClient;
+  // Create supabase client inside component to prevent issues during build
+  const supabase = useMemo(() => createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+  ), []);
   const [adminName, setAdminName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
