@@ -20,13 +20,41 @@ export default function Header() {
   );
   const [open, setOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      if (user?.email) {
+        // Try to fetch from student_users first, then teacher_users
+        const { data: studentData } = await supabase
+          .from("student_users")
+          .select("full_name, email, language, level")
+          .eq("email", user.email)
+          .single();
+        
+        if (studentData) {
+          setProfileData({ ...studentData, role: "Student" });
+        } else {
+          const { data: teacherData } = await supabase
+            .from("teacher_users")
+            .select("full_name, email, languages_taught")
+            .eq("email", user.email)
+            .single();
+          
+          if (teacherData) {
+            setProfileData({ ...teacherData, role: "Teacher" });
+          } else {
+            setProfileData({ email: user.email, full_name: user.user_metadata?.name || "User", role: "Unknown" });
+          }
+        }
+      }
+      
       setLoading(false);
     };
     checkUser();
@@ -40,7 +68,23 @@ export default function Header() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setShowProfileModal(false);
     router.push("/");
+  };
+
+  const copyEmail = () => {
+    if (user?.email) {
+      navigator.clipboard.writeText(user.email);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -71,12 +115,13 @@ export default function Header() {
         <div className="hidden md:flex items-center gap-4">
           {!loading && user ? (
             <>
-              <Link
-                href="/Dashboard/students"
-                className="font-semibold text-gray-800 hover:text-blue-600 transition"
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-semibold hover:shadow-lg transition"
+                title="Open profile"
               >
-                Dashboard
-              </Link>
+                {getInitials(profileData?.full_name || user.email || "U")}
+              </button>
               <button
                 onClick={handleLogout}
                 className="px-6 py-2 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
@@ -140,13 +185,12 @@ export default function Header() {
               <div className="flex flex-col gap-3 mt-auto">
                 {!loading && user ? (
                   <>
-                    <Link
-                      href="/Dashboard/students"
+                    <button
+                      onClick={() => { setShowProfileModal(true); setOpen(false); }}
                       className="w-full text-center font-semibold text-gray-800 hover:text-blue-600 transition py-2"
-                      onClick={() => setOpen(false)}
                     >
-                      Dashboard
-                    </Link>
+                      View Profile
+                    </button>
                     <button
                       onClick={() => { handleLogout(); setOpen(false); }}
                       className="w-full px-6 py-3 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
@@ -235,6 +279,112 @@ export default function Header() {
               >
                 Cancel
               </button>
+            </div>
+            <style jsx global>{`
+              @keyframes fadein {
+                from { opacity: 0; }
+                to { opacity: 1; }
+              }
+              @keyframes scaleup {
+                from { transform: scale(0.95); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+              }
+              .animate-fadein {
+                animation: fadein 0.2s ease-out;
+              }
+              .animate-scaleup {
+                animation: scaleup 0.2s ease-out;
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* Profile Modal */}
+        {showProfileModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fadein" onClick={() => setShowProfileModal(false)}>
+            <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 animate-scaleup" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition"
+                >
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold text-xl">
+                  {getInitials(profileData?.full_name || user?.email || "U")}
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-gray-800">{profileData?.full_name || user?.email}</p>
+                  <p className="text-sm text-gray-500">{profileData?.role || "User"}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-6 bg-gray-50 p-4 rounded-2xl">
+                <div>
+                  <p className="text-xs text-gray-600 font-semibold mb-1">Email</p>
+                  <p className="text-sm text-gray-800 break-all">{user?.email}</p>
+                </div>
+
+                {profileData?.language && (
+                  <div>
+                    <p className="text-xs text-gray-600 font-semibold mb-1">Language</p>
+                    <p className="text-sm text-gray-800">{profileData.language}</p>
+                  </div>
+                )}
+
+                {profileData?.level && (
+                  <div>
+                    <p className="text-xs text-gray-600 font-semibold mb-1">Level</p>
+                    <p className="text-sm text-gray-800">{profileData.level}</p>
+                  </div>
+                )}
+
+                {profileData?.languages_taught && (
+                  <div>
+                    <p className="text-xs text-gray-600 font-semibold mb-1">Languages Taught</p>
+                    <p className="text-sm text-gray-800">
+                      {Array.isArray(profileData.languages_taught)
+                        ? profileData.languages_taught.join(", ")
+                        : profileData.languages_taught}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-gray-600 font-semibold mb-1">Member Since</p>
+                  <p className="text-sm text-gray-800">
+                    {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={copyEmail}
+                  className="w-full px-4 py-3 rounded-xl border border-[#127db2] text-[#127db2] font-semibold hover:bg-blue-50 transition"
+                >
+                  Copy Email
+                </button>
+                <Link
+                  href="/Dashboard/students"
+                  onClick={() => setShowProfileModal(false)}
+                  className="w-full text-center px-4 py-3 rounded-xl bg-[#127db2] text-white font-semibold hover:brightness-95 transition"
+                >
+                  Go to Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
             <style jsx global>{`
               @keyframes fadein {

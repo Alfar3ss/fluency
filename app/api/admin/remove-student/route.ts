@@ -28,16 +28,25 @@ export async function POST(request: Request) {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
 
-    const { class_id, student_ids } = await request.json();
-
-    if (!class_id || !Array.isArray(student_ids) || student_ids.length === 0) {
+    const { class_id, student_id } = await request.json();
+    if (!class_id || !student_id) {
       return Response.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // Get current class to check capacity
+    // Unassign student from class
+    const { error: unassignError } = await supabase
+      .from("student_users")
+      .update({ class_id: null })
+      .eq("user_id", student_id);
+
+    if (unassignError) {
+      return Response.json({ error: unassignError.message }, { status: 400 });
+    }
+
+    // Decrement current_students (prevent negative)
     const { data: classData, error: classError } = await supabase
       .from("classes")
-      .select("max_students, current_students")
+      .select("current_students")
       .eq("id", class_id)
       .single();
 
@@ -45,36 +54,17 @@ export async function POST(request: Request) {
       return Response.json({ error: "Class not found" }, { status: 404 });
     }
 
-    const availableSpots = classData.max_students - (classData.current_students || 0);
-    if (student_ids.length > availableSpots) {
-      return Response.json({
-        error: `Class has only ${availableSpots} available spot${availableSpots !== 1 ? 's' : ''}`,
-      }, { status: 400 });
-    }
-
-    // Assign students to class
-    const { error: assignError } = await supabase
-      .from("student_users")
-      .update({ class_id })
-      .in("user_id", student_ids);
-
-    if (assignError) {
-      return Response.json({ error: assignError.message }, { status: 400 });
-    }
-
-    // Update class current_students count
+    const nextCount = Math.max((classData.current_students || 0) - 1, 0);
     const { error: updateError } = await supabase
       .from("classes")
-      .update({
-        current_students: (classData.current_students || 0) + student_ids.length,
-      })
+      .update({ current_students: nextCount })
       .eq("id", class_id);
 
     if (updateError) {
       return Response.json({ error: updateError.message }, { status: 400 });
     }
 
-    return Response.json({ ok: true, assigned_count: student_ids.length });
+    return Response.json({ ok: true });
   } catch (error: any) {
     return Response.json({ error: error.message }, { status: 500 });
   }

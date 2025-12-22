@@ -44,14 +44,19 @@ export default function TeacherLoginPage() {
       if (signInError) throw signInError;
 
       if (data.user) {
-        // Verify teacher exists in teacher_users table
-        const { data: teacherData, error: teacherError } = await supabase
-          .from("teacher_users")
-          .select("user_id")
-          .eq("user_id", data.user.id)
-          .single();
+        // Debug: confirm signed-in user
+        console.log("auth user", { id: data.user.id, email: data.user.email });
 
-        if (teacherError || !teacherData) {
+        // Verify teacher via server route using service role (bypasses RLS issues)
+        const resp = await fetch("/api/teacher/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: data.user.id }),
+        });
+        const verify = await resp.json();
+        console.log("teacher verify", { status: resp.status, verify });
+
+        if (!resp.ok || !verify?.exists) {
           await supabase.auth.signOut();
           throw new Error("No teacher account found. Please use the student login or contact admin.");
         }

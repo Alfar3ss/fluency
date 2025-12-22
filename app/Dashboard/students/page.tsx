@@ -1,18 +1,7 @@
-const currentClass = {
-  name: "English B1 – Group 3",
-  teacher: { name: "Emily Carter", photo: "https://i.pravatar.cc/100?img=47" },
-  level: "B1 (Intermediate)",
-  schedule: "Mon & Wed – 6:00 PM (UTC+1)",
-  nextLesson: "Wed, 7 May – 6:00 PM",
-  meetLink: "https://meet.google.com/abc-defg-hij",
-  progress: 64,
-  latestMessage: {
-    from: "Emily Carter",
-    text: "Great job last session! Please review phrasal verbs before next class.",
-    time: "2h ago",
-  },
-  classmates: ["Mina", "Alex", "Sara", "Youssef", "Lina", "Tom"],
-};
+"use client";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 
 const lessons = [
   { title: "Lesson 12 – Phrasal Verbs", status: "Upcoming", when: "Wed, 7 May – 6:00 PM", type: "Online" },
@@ -48,11 +37,124 @@ function statusBadge(status: string) {
   return map[status] || "bg-gray-100 text-gray-700";
 }
 
-export default function StudentDashboardPage() {
+export default function StudentDashboardPage() {  const router = useRouter();
+  const supabase = useMemo(() => createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+  ), []);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+  const [currentClass, setCurrentClass] = useState<any>(null);
+  const [studentData, setStudentData] = useState<any>(null);
+  const [classmates, setClassmates] = useState<string[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const run = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          router.push("/auth/login");
+          return;
+        }
+
+        // Fetch student data
+        const { data: student, error: studentErr } = await supabase
+          .from("student_users")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (studentErr || !student) {
+          setError("Student profile not found.");
+          setLoading(false);
+          return;
+        }
+
+        if (!active) return;
+        setStudentData(student);
+
+        // Fetch class details if assigned
+        if (student.class_id) {
+          const { data: classData, error: classErr } = await supabase
+            .from("classes")
+            .select("*")
+            .eq("id", student.class_id)
+            .single();
+
+          if (!classErr && classData) {
+            // Fetch teacher info
+            let teacherData = null;
+            if (classData.teacher_id) {
+              const { data: tData } = await supabase
+                .from("teacher_users")
+                .select("*")
+                .eq("id", classData.teacher_id)
+                .single();
+              teacherData = tData;
+            }
+
+            // Fetch classmates
+            const { data: classmatesData } = await supabase
+              .from("student_users")
+              .select("full_name")
+              .eq("class_id", student.class_id)
+              .neq("id", student.id);
+
+            if (active) {
+              setCurrentClass({
+                ...classData,
+                teacher: teacherData ? {
+                  name: teacherData.full_name,
+                  photo: `https://i.pravatar.cc/100?img=${Math.floor(Math.random() * 70)}`,
+                } : null,
+                progress: 64,
+                latestMessage: {
+                  from: teacherData?.full_name || "Teacher",
+                  text: "Great job last session! Please review the material before next class.",
+                  time: "2h ago",
+                },
+                classmates: classmatesData?.map((c: any) => c.full_name) || [],
+              });
+              setClassmates(classmatesData?.map((c: any) => c.full_name) || []);
+            }
+          }
+        }
+
+        if (active) setLoading(false);
+      } catch (err: any) {
+        if (active) {
+          setError(err?.message || "Failed to load student data.");
+          setLoading(false);
+        }
+      }
+    };
+
+    run();
+    return () => {
+      active = false;
+    };
+  }, [router, supabase]);
+
   return (
     <main className="bg-[#f3f6f8] min-h-screen py-10 px-4">
       <div className="max-w-6xl mx-auto space-y-10">
-        {/* Overview */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-3xl p-6 text-red-700">
+            <p className="font-semibold">{error}</p>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-20 text-gray-500">Loading your dashboard...</div>
+        ) : !currentClass ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 text-amber-700">
+            <p className="font-semibold">You haven't been assigned to a class yet.</p>
+            <p className="text-sm mt-1">Your admin will assign you to a class soon.</p>
+          </div>
+        ) : (
+        <>
         <section className="grid gap-6 md:grid-cols-3">
           <div className="md:col-span-2 bg-white rounded-3xl shadow-xl p-6 space-y-4">
             <div className="flex items-start justify-between gap-3">
@@ -107,12 +209,12 @@ export default function StudentDashboardPage() {
               <div className="p-3 rounded-xl border border-gray-200">
                 <div className="text-sm text-gray-500">Classmates</div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {currentClass.classmates.map((name) => (
-                    <span key={name} className="text-xs px-3 py-1 rounded-full bg-[#e6f4ff] text-[#127db2]">
-                      {name}
-                    </span>
-                  ))}
-                </div>
+                    {currentClass.classmates.map((name: string) => (
+                      <span key={name} className="text-xs px-3 py-1 rounded-full bg-[#e6f4ff] text-[#127db2]">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
               </div>
               <button className="w-full py-3 rounded-xl font-semibold bg-[#127db2] text-white shadow hover:scale-[1.02] transition">
                 Message class
@@ -150,7 +252,7 @@ export default function StudentDashboardPage() {
             <div className="p-4 rounded-2xl border border-gray-100">
               <p className="text-xs text-gray-500 mb-1">Classmates</p>
               <div className="flex flex-wrap gap-2">
-                {currentClass.classmates.map((name) => (
+                {currentClass.classmates.map((name: string) => (
                   <span key={name} className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700">
                     {name}
                   </span>
@@ -255,6 +357,8 @@ export default function StudentDashboardPage() {
             ))}
           </div>
         </section>
+        </>
+        )}
       </div>
     </main>
   );
