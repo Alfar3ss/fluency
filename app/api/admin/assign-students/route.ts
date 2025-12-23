@@ -34,45 +34,58 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // Get current class to check capacity
-    const { data: classData, error: classError } = await supabase
-      .from("classes")
-      .select("max_students, current_students")
-      .eq("id", class_id)
-      .single();
+    // Get class and current enrollment count for capacity check
+    const [classRes, enrollmentCountRes] = await Promise.all([
+      supabase
+        .from("classes")
+        .select("max_students")
+        .eq("id", class_id)
+        .single(),
+      supabase
+        .from("class_enrollments")
+        .select("student_id", { count: "exact", head: true })
+        .eq("class_id", class_id)
+        .eq("status", "active"),
+    ]);
 
-    if (classError || !classData) {
+    if (classRes.error || !classRes.data) {
       return Response.json({ error: "Class not found" }, { status: 404 });
     }
 
-    const availableSpots = classData.max_students - (classData.current_students || 0);
+    const activeCount = enrollmentCountRes.count || 0;
+    const availableSpots = (classRes.data.max_students || 0) - activeCount;
     if (student_ids.length > availableSpots) {
       return Response.json({
-        error: `Class has only ${availableSpots} available spot${availableSpots !== 1 ? 's' : ''}`,
+        error: `Class has only ${availableSpots} available spot${availableSpots !== 1 ? "s" : ""}`,
       }, { status: 400 });
     }
 
-    // Assign students to class
-    const { error: assignError } = await supabase
+    // Enroll students (idempotent upsert) and keep legacy class_id in sync
+    const enrollRows = student_ids.map((student_id: string) => ({ class_id, student_id, status: "active" }));
+    const { error: enrollError } = await supabase
+      .from("class_enrollments")
+      .upsert(enrollRows, { onConflict: "class_id,student_id" });
+
+    if (enrollError) {
+      return Response.json({ error: enrollError.message }, { status: 400 });
+    }
+
+    await supabase
       .from("student_users")
       .update({ class_id })
       .in("user_id", student_ids);
 
-    if (assignError) {
-      return Response.json({ error: assignError.message }, { status: 400 });
-    }
+    // Recompute class current_students from active enrollments
+    const { count: newActiveCount } = await supabase
+      .from("class_enrollments")
+      .select("student_id", { count: "exact", head: true })
+      .eq("class_id", class_id)
+      .eq("status", "active");
 
-    // Update class current_students count
-    const { error: updateError } = await supabase
+    await supabase
       .from("classes")
-      .update({
-        current_students: (classData.current_students || 0) + student_ids.length,
-      })
+      .update({ current_students: newActiveCount || 0 })
       .eq("id", class_id);
-
-    if (updateError) {
-      return Response.json({ error: updateError.message }, { status: 400 });
-    }
 
     return Response.json({ ok: true, assigned_count: student_ids.length });
   } catch (error: any) {

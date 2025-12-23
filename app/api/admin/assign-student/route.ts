@@ -50,25 +50,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Assign student to class
-    const { data: updatedStudent, error: updateError } = await adminClient
-      .from("student_users")
-      .update({ class_id })
-      .eq("user_id", student_id)
+    // Enroll student (idempotent) and keep legacy class_id in sync for now
+    const { data: enrollment, error: enrollError } = await adminClient
+      .from("class_enrollments")
+      .upsert({ class_id, student_id, status: "active" }, { onConflict: "class_id,student_id" })
       .select()
       .single();
 
-    if (updateError) {
-      console.error("Error assigning student:", updateError);
+    if (enrollError) {
+      console.error("Error assigning student:", enrollError);
       return NextResponse.json(
         { error: "Failed to assign student" },
         { status: 500 }
       );
     }
 
+    // Keep student_users.class_id populated for existing UI that still reads it
+    await adminClient.from("student_users").update({ class_id }).eq("user_id", student_id);
+
+    // Recalculate current_students from active enrollments
+    const { count: activeCount } = await adminClient
+      .from("class_enrollments")
+      .select("student_id", { count: "exact", head: true })
+      .eq("class_id", class_id)
+      .eq("status", "active");
+
+    if (typeof activeCount === "number") {
+      await adminClient.from("classes").update({ current_students: activeCount }).eq("id", class_id);
+    }
+
     return NextResponse.json({
       ok: true,
-      student: updatedStudent,
+      enrollment,
     });
   } catch (error) {
     console.error("Error in assign-student:", error);

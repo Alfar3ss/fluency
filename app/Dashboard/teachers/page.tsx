@@ -28,8 +28,8 @@ type ClassRow = {
 type StudentRow = {
   user_id: string;
   full_name: string;
-  level: string | null;
-  status: string;
+  skill_level: string | null;
+  status?: string | null;
   class_id: string | null;
 };
 
@@ -82,7 +82,7 @@ export default function TeacherDashboardPage() {
         const classIds = classRows.map((c) => c.id);
         const { data: studentData, error: studentError } = await supabase
           .from("student_users")
-          .select("user_id, full_name, level, status, class_id")
+          .select("user_id, full_name, skill_level, class_id")
           .in("class_id", classIds);
 
         if (studentError) throw studentError;
@@ -257,7 +257,7 @@ export default function TeacherDashboardPage() {
                     </div>
                     <button
                       className="mt-3 w-full py-2 rounded-xl font-semibold bg-[#127db2] text-white shadow hover:scale-[1.01] transition"
-                      onClick={() => setSelectedClassId(c.id)}
+                      onClick={() => router.push(`/Dashboard/teachers/${c.id}`)}
                     >
                       View class
                     </button>
@@ -294,9 +294,9 @@ export default function TeacherDashboardPage() {
                       <div key={s.user_id} className="rounded-xl border border-gray-200 bg-white p-3">
                         <div className="flex items-center justify-between">
                           <p className="font-semibold text-gray-800">{s.full_name}</p>
-                          <span className="text-xs px-2 py-1 rounded-full bg-[#e6f4ff] text-[#127db2]">{s.level || "Level N/A"}</span>
+                          <span className="text-xs px-2 py-1 rounded-full bg-[#e6f4ff] text-[#127db2]">{s.skill_level || "Level N/A"}</span>
                         </div>
-                        <p className="text-xs text-gray-500">Status: {s.status}</p>
+                        <p className="text-xs text-gray-500">Status: {s.status ?? "Active"}</p>
                       </div>
                     ))
                   )}

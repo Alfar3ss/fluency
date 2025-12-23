@@ -33,28 +33,27 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // Unassign student from class
-    const { error: unassignError } = await supabase
-      .from("student_users")
-      .update({ class_id: null })
-      .eq("user_id", student_id);
+    // Remove enrollment and clear legacy class_id
+    const { error: unenrollError } = await supabase
+      .from("class_enrollments")
+      .delete()
+      .eq("class_id", class_id)
+      .eq("student_id", student_id);
 
-    if (unassignError) {
-      return Response.json({ error: unassignError.message }, { status: 400 });
+    if (unenrollError) {
+      return Response.json({ error: unenrollError.message }, { status: 400 });
     }
 
-    // Decrement current_students (prevent negative)
-    const { data: classData, error: classError } = await supabase
-      .from("classes")
-      .select("current_students")
-      .eq("id", class_id)
-      .single();
+    await supabase.from("student_users").update({ class_id: null }).eq("user_id", student_id);
 
-    if (classError || !classData) {
-      return Response.json({ error: "Class not found" }, { status: 404 });
-    }
+    // Recompute current_students from active enrollments
+    const { count: activeCount } = await supabase
+      .from("class_enrollments")
+      .select("student_id", { count: "exact", head: true })
+      .eq("class_id", class_id)
+      .eq("status", "active");
 
-    const nextCount = Math.max((classData.current_students || 0) - 1, 0);
+    const nextCount = activeCount || 0;
     const { error: updateError } = await supabase
       .from("classes")
       .update({ current_students: nextCount })
