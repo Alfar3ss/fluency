@@ -7,8 +7,7 @@ export default function Footer() {
         {/* Brand & Social */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-white rounded" />
-            <span className="font-bold text-xl text-white">Fluency</span>
+            <img src="/logo.png" alt="Fluency Logo" className="h-10" />
           </div>
           <p className="mb-4 text-lg text-gray-300">Learn languages and practice with native speakers.<br />Join thousands of learners on their journey to fluency.</p>
           <div className="flex gap-3 mt-6">
@@ -23,7 +22,6 @@ export default function Footer() {
           <h4 className="font-bold text-lg text-white mb-4">Product</h4>
           <ul className="space-y-2">
             <li><Link href="/pricing" className="hover:underline">Pricing</Link></li>
-            <li><Link href="/teachers" className="hover:underline">Teachers</Link></li>
             <li><Link href="/placement-test" className="hover:underline">Placement Test</Link></li>
             <li><Link href="/dashboard" className="hover:underline">Dashboard</Link></li>
           </ul>

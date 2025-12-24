@@ -92,7 +92,7 @@ export default function Header() {
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         {/* section dial logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-blue-600 text-lg">
-            <img src="/logo.png" alt="FluencyLogo" className="w-34 h-9"/>
+            <img src="/logo.png" alt="FluencyLogo" className="w-40 h-10"/>
         </Link>
         {/* dial desktop */}
         <div className="flex-1 justify-center hidden md:flex">

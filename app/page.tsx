@@ -15,11 +15,6 @@ const features = [
     desc: "Real conversations with certified native speakers tailored to your level.",
   },
   {
-    icon: "chat",
-    title: "Group Conversations",
-    desc: "Join free community sessions to practice with learners worldwide.",
-  },
-  {
     icon: "assessment",
     title: "Progress Tracking",
     desc: "Track your improvement with structured assessments and detailed feedback.",
@@ -27,7 +22,7 @@ const features = [
   {
     icon: "teacher",
     title: "Expert Teachers",
-    desc: "Learn from verified native speakers with proven teaching experience.",
+    desc: "learn from verified teachers with proven teaching experience",
   },
 ];
 
@@ -42,20 +37,20 @@ export default function Home() {
     {/* Left */}
     <div>
       <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-600 mb-6">
-        ● Trusted by 10,000+ learners
+        ● Trusted by 1000+ learners
       </span>
 
       <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight">
-        Speak languages
+        Stop Dabbling.
         <br />
         <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-          with confidence
+          Start Speaking.
         </span>
       </h1>
 
       <p className="mt-6 text-lg text-gray-600 max-w-xl">
-        Learn through real conversations with certified native speakers.
-        Structured lessons, real progress, and measurable fluency.
+        Experience real, measurable progress with a curriculum designed by certified teachers. 
+        We pair you with native speakers to ensure you don’t just study a language—you master it.
       </p>
 
       <div className="mt-10 flex gap-4">
@@ -94,9 +89,9 @@ export default function Home() {
 
     {/* Right */}
     <div className="relative">
-      <div className="rounded-3xl overflow-hidden shadow-2xl">
+      <div className="rounded-3xl overflow-hidden shadow-2xl h-100">
         <img
-          src="hero.jpg?auto=format&fit=crop&w=900&q=80"
+          src="hero.jpg"
           className="w-full h-full object-cover"
         />
       </div>
@@ -108,20 +103,20 @@ export default function Home() {
       {/* TRUST BAR */}
       <section className="bg-gray-50 border-t border-b">
         <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 text-center gap-8">
-          <Stat title="10,000+" subtitle="Active Learners" />
-          <Stat title="500+" subtitle="Native Teachers" />
-          <Stat title="15+" subtitle="Languages" />
-          <Stat title="95%" subtitle="Success Rate" />
+          <Stat title="1000+" subtitle="Active Learners" />
+          <Stat title="50+" subtitle="Native Teachers" />
+          <Stat title="6" subtitle="Languages" />
+          <Stat title="100%" subtitle="Success Rate" />
         </div>
       </section>
 
       {/* FEATURES */}
       <section className="max-w-7xl mx-auto px-6 py-28">
   <h2 className="text-4xl font-bold text-center">
-    Built for real <span className="text-blue-600">fluency</span>
+    Built for real <span className="text-blue-600">Fluency</span>
   </h2>
 
-  <div className="mt-16 grid grid-cols-1 md:grid-cols-4 gap-8">
+  <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
     {features.map((f, i) => (
       <div
         key={i}
@@ -138,7 +133,7 @@ export default function Home() {
       {/* STEPS */}
       <section className="bg-gray-50 py-24">
         <h2 className="text-4xl font-bold text-center mb-12">
-          Your Path to <span className="text-orange-500">Fluency</span>
+          Your Path to <span className="text-blue-600">Fluency</span>
         </h2>
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-6 text-center">
           {[
@@ -160,7 +155,6 @@ export default function Home() {
       {/* PRICING */}
       <section className="max-w-5xl mx-auto my-24">
         <div className="text-center mb-4">
-          <span className="inline-block px-4 py-1 rounded-full bg-blue-50 text-blue-600 font-semibold text-xs mb-4">Simple Pricing</span>
           <h2 className="text-4xl font-bold mb-2">Invest in Your <span className="text-blue-600">Future</span></h2>
           <p className="text-gray-500 mb-8">Choose the plan that fits your learning goals</p>
         </div>
@@ -169,7 +163,6 @@ export default function Home() {
           <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border border-gray-200">
             <h3 className="text-2xl font-bold mb-2">3 Months</h3>
             <div className="text-5xl font-extrabold mb-2 text-gray-800">700 <span className="text-lg font-medium">MAD</span></div>
-            <div className="text-gray-500 mb-6">233 MAD/month</div>
             <ul className="mb-8 space-y-2 text-left w-full">
               <li className="flex items-center gap-2 text-gray-700"><span className="text-green-500">✔</span> 1-on-1 lessons with native teachers</li>
               <li className="flex items-center gap-2 text-gray-700"><span className="text-green-500">✔</span> Free communication classes</li>
@@ -184,7 +177,6 @@ export default function Home() {
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-100 text-orange-500 px-4 py-1 rounded-full text-xs font-semibold shadow">Most Popular</span>
             <h3 className="text-2xl font-bold mb-2">6 Months</h3>
             <div className="text-5xl font-extrabold mb-2 text-gray-800">1200 <span className="text-lg font-medium">MAD</span></div>
-            <div className="text-gray-500 mb-6">200 MAD/month</div>
             <ul className="mb-8 space-y-2 text-left w-full">
               <li className="flex items-center gap-2 text-gray-700"><span className="text-green-500">✔</span> 1-on-1 lessons with native teachers</li>
               <li className="flex items-center gap-2 text-gray-700"><span className="text-green-500">✔</span> Free communication classes</li>
@@ -198,7 +190,6 @@ export default function Home() {
           <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border border-gray-200">
             <h3 className="text-2xl font-bold mb-2">9 Months</h3>
             <div className="text-5xl font-extrabold mb-2 text-gray-800">1700 <span className="text-lg font-medium">MAD</span></div>
-            <div className="text-gray-500 mb-6">189 MAD/month</div>
             <ul className="mb-8 space-y-2 text-left w-full">
               <li className="flex items-center gap-2 text-gray-700"><span className="text-green-500">✔</span> 1-on-1 lessons with native teachers</li>
               <li className="flex items-center gap-2 text-gray-700"><span className="text-green-500">✔</span> Free communication classes</li>
@@ -320,11 +311,6 @@ function Feature({ icon, title, description }: { icon: string; title: string; de
         {icon === "video" && (
           <span className="inline-block bg-blue-100 text-blue-500 p-3 rounded-full">
             <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><rect x="3" y="7" width="15" height="10" rx="2" stroke="#3b82f6" strokeWidth="2"/><path d="M21 9v6" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"/></svg>
-          </span>
-        )}
-        {icon === "chat" && (
-          <span className="inline-block bg-blue-100 text-blue-500 p-3 rounded-full">
-            <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-1.9.73A8.5 8.5 0 1 1 12 3.5c1.61 0 3.13.46 4.4 1.26" stroke="#3b82f6" strokeWidth="2"/><path d="M22 4.5v6h-6" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"/></svg>
           </span>
         )}
         {icon === "assessment" && (
