@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
 const nav = [
   { name: "Home", href: "/" },
@@ -14,10 +14,6 @@ const nav = [
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
   const [open, setOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -67,9 +63,22 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setShowProfileModal(false);
-    router.push("/");
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut({ scope: "global" });
+      if (error) {
+        console.error("Logout error:", error.message);
+      }
+      setUser(null);
+      setProfileData(null);
+      setShowProfileModal(false);
+      setOpen(false);
+      router.replace("/");
+    } catch (e) {
+      console.error("Unexpected logout error:", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyEmail = () => {
@@ -87,11 +96,16 @@ export default function Header() {
       .slice(0, 2);
   };
 
+  const avatarUrl =
+    (user?.user_metadata?.avatar_url as string) ||
+    (user?.user_metadata?.picture as string) ||
+    null;
+
   return (
     <header className="bg-white w-full sticky top-0 z-30 shadow-sm">
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         {/* section dial logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-blue-600 text-lg">
+        <Link href="/" className="flex items-center gap-2 font-bold text-blue-600 text-lg -ml-3">
             <img src="/logo.png" alt="FluencyLogo" className="w-40 h-10"/>
         </Link>
         {/* dial desktop */}
@@ -117,16 +131,19 @@ export default function Header() {
             <>
               <button
                 onClick={() => setShowProfileModal(true)}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-semibold hover:shadow-lg transition"
+                className={`relative overflow-hidden flex items-center justify-center w-10 h-10 rounded-full ${
+                  avatarUrl ? "" : "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
+                } hover:shadow-lg transition`}
                 title="Open profile"
               >
-                {getInitials(profileData?.full_name || user.email || "U")}
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-6 py-2 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
-              >
-                Logout
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Profile" className="absolute inset-0 w-full h-full object-cover" />
+                ) : (
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                    <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0Z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M12 14a7 7 0 00-7 7h14a7 7 0 0 0-7-7Z" stroke="currentColor" strokeWidth="2" />
+                  </svg>
+                )}
               </button>
             </>
           ) : (
@@ -190,12 +207,6 @@ export default function Header() {
                       className="w-full text-center font-semibold text-gray-800 hover:text-blue-600 transition py-2"
                     >
                       View Profile
-                    </button>
-                    <button
-                      onClick={() => { handleLogout(); setOpen(false); }}
-                      className="w-full px-6 py-3 rounded-xl bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition"
-                    >
-                      Logout
                     </button>
                   </>
                 ) : (
@@ -316,8 +327,15 @@ export default function Header() {
               </div>
 
               <div className="flex flex-col items-center gap-4 mb-6">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold text-xl">
-                  {getInitials(profileData?.full_name || user?.email || "U")}
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white font-bold text-xl overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                      <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0Z" stroke="currentColor" strokeWidth="2" />
+                      <path d="M12 14a7 7 0 00-7 7h14a7 7 0 0 0-7-7Z" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                  )}
                 </div>
                 <div className="text-center">
                   <p className="text-xl font-bold text-gray-800">{profileData?.full_name || user?.email}</p>
@@ -380,9 +398,10 @@ export default function Header() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+                  disabled={loading}
+                  className="w-full px-4 py-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Logout
+                  {loading ? "Logging out…" : "Logout"}
                 </button>
               </div>
             </div>

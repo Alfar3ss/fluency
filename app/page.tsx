@@ -147,7 +147,6 @@ export default function Home() {
               <div className="text-3xl font-bold text-orange-300 mb-2">{s.step}</div>
               <div className="font-bold text-lg mb-1">{s.title}</div>
               <div className="text-gray-500 text-sm">{s.desc}</div>
-              {i < 4 && <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 text-orange-200 text-3xl">→</div>}
             </div>
           ))}
         </div>
@@ -160,7 +159,7 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* 3 Months Card */}
-          <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border border-gray-200">
+          <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border border-gray-200 hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <h3 className="text-2xl font-bold mb-2">3 Months</h3>
             <div className="text-5xl font-extrabold mb-2 text-gray-800">700 <span className="text-lg font-medium">MAD</span></div>
             <ul className="mb-8 space-y-2 text-left w-full">
@@ -173,7 +172,7 @@ export default function Home() {
             <button className="w-full py-3 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold hover:bg-blue-50 transition">Get Started</button>
           </div>
           {/* 6 Months Card */}
-          <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border-2 border-orange-400 relative scale-105 z-10">
+          <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border-2 border-orange-400 relative scale-105 z-10 hover:shadow-2xl hover:scale-110 transition-all duration-300">
             <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-100 text-orange-500 px-4 py-1 rounded-full text-xs font-semibold shadow">Most Popular</span>
             <h3 className="text-2xl font-bold mb-2">6 Months</h3>
             <div className="text-5xl font-extrabold mb-2 text-gray-800">1200 <span className="text-lg font-medium">MAD</span></div>
@@ -187,7 +186,7 @@ export default function Home() {
             <button className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white font-semibold shadow hover:scale-[1.03] transition">Get Started</button>
           </div>
           {/* 9 Months Card */}
-          <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border border-gray-200">
+          <div className="rounded-3xl bg-white shadow-xl p-10 flex flex-col items-center border border-gray-200 hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <h3 className="text-2xl font-bold mb-2">9 Months</h3>
             <div className="text-5xl font-extrabold mb-2 text-gray-800">1700 <span className="text-lg font-medium">MAD</span></div>
             <ul className="mb-8 space-y-2 text-left w-full">
